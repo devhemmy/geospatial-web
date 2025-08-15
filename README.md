@@ -24,7 +24,7 @@ To run this project locally, follow these steps:
     Create a `.env` file in the root of the project by copying the example file:
 
     ```bash
-    cp .env.example .env
+    touch .env
     ```
 
     Open the `.env` file and add your free API key from [MapTiler](https://www.maptiler.com/cloud/).
