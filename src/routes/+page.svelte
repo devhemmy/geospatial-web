@@ -37,75 +37,79 @@
 	let currentCenter = { lng: 14.55, lat: 47.52 };
 	let mouseCoords = { lng: 0, lat: 0 };
 
-	onMount(async () => {
+	onMount(() => {
 		const apiKey = PUBLIC_MAPTILER_API_KEY;
 
-		map = new Map({
-			container: mapContainer,
-			style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${apiKey}`,
-			center: [currentCenter.lng, currentCenter.lat],
-			zoom: currentZoom
-		});
-
-		map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
-		map.addControl(new maplibregl.ScaleControl(), 'bottom-left');
-
-		map.on('move', () => {
-			const center = map.getCenter();
-			currentCenter = { lng: center.lng, lat: center.lat };
-			currentZoom = map.getZoom();
-		});
-
-		map.on('mousemove', (e) => {
-			mouseCoords = {
-				lng: parseFloat(e.lngLat.lng.toFixed(4)),
-				lat: parseFloat(e.lngLat.lat.toFixed(4))
-			};
-		});
-
-		map.on('load', async () => {
-			map.addSource('austria-boundary', { type: 'geojson', data: '/austria.geojson' });
-			map.addLayer({
-				id: 'austria-outline',
-				type: 'line',
-				source: 'austria-boundary',
-				paint: {
-					'line-color': '#804000',
-					'line-width': 2,
-					'line-opacity': boundaryOpacity / 100
-				}
+		async function initializeMap() {
+			map = new Map({
+				container: mapContainer,
+				style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${apiKey}`,
+				center: [currentCenter.lng, currentCenter.lat],
+				zoom: currentZoom
 			});
 
-			const initialCogUrl = 'https://maplibre.org/maplibre-gl-js/docs/assets/cog.tif';
-			const initialTilejsonUrl = `https://titiler.xyz/cog/WebMercatorQuad/tilejson.json?url=${encodeURIComponent(initialCogUrl)}&bidx=1&bidx=2&bidx=3`;
+			map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
+			map.addControl(new maplibregl.ScaleControl(), 'bottom-left');
 
-			const response = await fetch(initialTilejsonUrl);
-			const tileJson = await response.json();
-
-			const bbox = tileJson.bounds;
-			const bounds: [[number, number], [number, number]] = [
-				[bbox[0], bbox[1]],
-				[bbox[2], bbox[3]]
-			];
-
-			map.fitBounds(bounds, { padding: 50, duration: 3000, maxZoom: 14 });
-
-			map.addSource('cog-source', { type: 'raster', url: initialTilejsonUrl, tileSize: 256 });
-			map.addLayer({
-				id: 'cog-layer',
-				type: 'raster',
-				source: 'cog-source',
-				paint: { 'raster-opacity': satelliteOpacity / 100 }
+			map.on('move', () => {
+				const center = map.getCenter();
+				currentCenter = { lng: center.lng, lat: center.lat };
+				currentZoom = map.getZoom();
 			});
 
-			currentImageInfo = {
-				date: 'Demo Image',
-				cloudCover: 0,
-				id: 'demo-cog',
-				bbox: bbox,
-				collection: 'Demo'
-			};
-		});
+			map.on('mousemove', (e) => {
+				mouseCoords = {
+					lng: parseFloat(e.lngLat.lng.toFixed(4)),
+					lat: parseFloat(e.lngLat.lat.toFixed(4))
+				};
+			});
+
+			map.on('load', async () => {
+				map.addSource('austria-boundary', { type: 'geojson', data: '/austria.geojson' });
+				map.addLayer({
+					id: 'austria-outline',
+					type: 'line',
+					source: 'austria-boundary',
+					paint: {
+						'line-color': '#804000',
+						'line-width': 2,
+						'line-opacity': boundaryOpacity / 100
+					}
+				});
+
+				const initialCogUrl = 'https://maplibre.org/maplibre-gl-js/docs/assets/cog.tif';
+				const initialTilejsonUrl = `https://titiler.xyz/cog/WebMercatorQuad/tilejson.json?url=${encodeURIComponent(initialCogUrl)}&bidx=1&bidx=2&bidx=3`;
+
+				const response = await fetch(initialTilejsonUrl);
+				const tileJson = await response.json();
+
+				const bbox = tileJson.bounds;
+				const bounds: [[number, number], [number, number]] = [
+					[bbox[0], bbox[1]],
+					[bbox[2], bbox[3]]
+				];
+
+				map.fitBounds(bounds, { padding: 50, duration: 3000, maxZoom: 14 });
+
+				map.addSource('cog-source', { type: 'raster', url: initialTilejsonUrl, tileSize: 256 });
+				map.addLayer({
+					id: 'cog-layer',
+					type: 'raster',
+					source: 'cog-source',
+					paint: { 'raster-opacity': satelliteOpacity / 100 }
+				});
+
+				currentImageInfo = {
+					date: 'Demo Image',
+					cloudCover: 0,
+					id: 'demo-cog',
+					bbox: bbox,
+					collection: 'Demo'
+				};
+			});
+		}
+
+		initializeMap();
 
 		return () => {
 			map?.remove();
@@ -275,7 +279,7 @@
 </script>
 
 <main class="relative h-screen w-screen bg-gray-50">
-	<div class="h-full w-full" bind:this={mapContainer} />
+	<div class="h-full w-full" bind:this={mapContainer}></div>
 
 	<button
 		on:click={() => (isPanelOpen = !isPanelOpen)}
