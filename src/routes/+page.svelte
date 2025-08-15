@@ -7,40 +7,51 @@
 	let mapContainer: HTMLElement;
 	let map: Map;
 
-	onMount(() => {
+	onMount(async () => {
+		// Make the onMount function async
+		// 1. Dynamically import and register the COG protocol
+		// This happens only in the browser, avoiding SSR errors.
+		const { cogProtocol } = await import('@geomatico/maplibre-cog-protocol');
+		maplibregl.addProtocol('cog', cogProtocol);
+
 		const apiKey = PUBLIC_MAPTILER_API_KEY;
 
 		map = new Map({
 			container: mapContainer,
 			style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${apiKey}`,
-			center: [133.7751, -25.2744],
-			zoom: 4
+			// Updated center/zoom to focus on the COG's location
+			center: [11.39831, 47.26244],
+			zoom: 14
 		});
 
 		map.on('load', () => {
-			map.addSource('australia-boundary', {
+			// The Austria boundary layers are still here
+			map.addSource('austria-boundary', {
 				type: 'geojson',
-				data: '/australia.geojson'
+				data: '/austria.geojson'
 			});
-
 			map.addLayer({
-				id: 'australia-fill',
-				type: 'fill',
-				source: 'australia-boundary',
-				paint: {
-					'fill-color': '#ff4500',
-					'fill-opacity': 0.3
-				}
-			});
-
-			map.addLayer({
-				id: 'australia-outline',
+				id: 'austria-outline',
 				type: 'line',
-				source: 'australia-boundary',
+				source: 'austria-boundary',
 				paint: {
-					'line-color': '#cc3700',
+					'line-color': '#804000',
 					'line-width': 2
 				}
+			});
+
+			// 2. Add the COG data source using the new protocol
+			map.addSource('cog-source', {
+				type: 'raster',
+				url: 'cog://https://maplibre.org/maplibre-gl-js/docs/assets/cog.tif',
+				tileSize: 256
+			});
+
+			// 3. Add the raster layer to display the COG
+			map.addLayer({
+				id: 'cog-layer',
+				type: 'raster',
+				source: 'cog-source'
 			});
 		});
 
